@@ -57,13 +57,17 @@ export default {
           // auth: true // Just as example. Can be any other service.
         }
       }
-    ]
+    ],
+    '@nuxtjs/markdownit'
   ],
   /*
   ** Axios module configuration
   ** See https://axios.nuxtjs.org/options
   */
   axios: {
+  },
+  markdownit: {
+    injected: true
   },
   /*
   ** vuetify module configuration
@@ -72,7 +76,7 @@ export default {
   vuetify: {
     customVariables: ['~/assets/variables.scss'],
     theme: {
-      dark: true,
+      dark: false,
       themes: {
         dark: {
           primary: colors.blue.darken2,
