@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-card>
       <v-toolbar color="success" dark flat>
-        <v-toolbar-title>list</v-toolbar-title>
+        <v-toolbar-title>list {{ items.length }}</v-toolbar-title>
         <v-spacer />
         <v-sheet width="100" color="transparent">
           <v-select
@@ -13,15 +13,12 @@
             flat
           />
         </v-sheet>
-        <v-btn @click="list" icon>
-          <v-icon>mdi-refresh</v-icon>
-        </v-btn>
       </v-toolbar>
       <v-card-text>
         <template v-for="(item, i) in items">
           <v-list-item :key="item.id" three-line>
             <v-list-item-content>
-              <v-list-item-title>{{ item.title }}</v-list-item-title>
+              <v-list-item-title>{{ i + ' ' + item.title }}</v-list-item-title>
               <v-list-item-subtitle>{{ item.description }}</v-list-item-subtitle>
               <v-list-item-subtitle>{{ item.date }}</v-list-item-subtitle>
             </v-list-item-content>
@@ -34,8 +31,8 @@
           <v-divider :key="i" />
         </template>
       </v-card-text>
-      <v-card-actions>
-        <v-btn @click="next" text>
+      <v-card-actions v-intersect="onIntersect">
+        <v-btn @click="next" :loading="loading" text>
           more
         </v-btn>
       </v-card-actions>
@@ -48,47 +45,53 @@ export default {
     return {
       items: [],
       last: null,
-      sortName: 'date'
+      sortName: 'date',
+      loading: false
     }
   },
   watch: {
     sortName () {
-      this.list()
+      this.items = []
+      // this.next()
     }
   },
   mounted () {
-    this.list()
   },
   methods: {
-    async list () {
-      this.items = []
-      const sn = await this.$fireStore.collection('docs')
-        .orderBy(this.sortName, 'desc')
-        .limit(3)
-        .get()
-      sn.docs.forEach((v) => {
-        const item = v.data()
-        item.id = v.id
-        item.category = v.id.split('-')[0]
-        item.name = v.id.split('-')[1]
-        this.items.push(item)
-      })
-      this.last = sn.docs[sn.docs.length - 1]
-    },
     async next () {
-      const sn = await this.$fireStore.collection('docs')
+      const ref = this.$fireStore.collection('docs')
         .orderBy(this.sortName, 'desc')
-        .startAfter(this.last)
-        .limit(3)
-        .get()
-      sn.docs.forEach((v) => {
-        const item = v.data()
-        item.id = v.id
-        item.category = v.id.split('-')[0]
-        item.name = v.id.split('-')[1]
-        this.items.push(item)
-      })
-      this.last = sn.docs[sn.docs.length - 1]
+        .limit(10)
+      let sn
+      this.loading = true
+      try {
+        if (!this.items.length) {
+          sn = await ref.get()
+        } else {
+          if (!this.last) return
+          sn = await ref.startAfter(this.last).get()
+        }
+        if (!sn.docs.length) {
+          this.last = null
+          return
+        }
+        sn.docs.forEach((v) => {
+          const item = v.data()
+          item.id = v.id
+          item.category = v.id.split('-')[0]
+          item.name = v.id.split('-')[1]
+          this.items.push(item)
+        })
+        this.last = sn.docs[sn.docs.length - 1]
+      } catch (e) {
+        console.error(e.message)
+      } finally {
+        this.loading = false
+      }
+    },
+    onIntersect (entries, observer, isIntersecting) {
+      console.log(entries, observer, isIntersecting)
+      if (isIntersecting) this.next()
     }
   }
 }
