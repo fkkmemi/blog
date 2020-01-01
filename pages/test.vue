@@ -1,44 +1,45 @@
 <template>
   <v-container>
-    <v-list three-line>
-      <v-list-item v-for="(item, i) in items" :key="i">
-        <v-list-item-content>
-          <v-list-item-title>{{ i + ' ' + item.title }}</v-list-item-title>
-          <v-list-item-subtitle>{{ item.subtitle }}</v-list-item-subtitle>
-          <v-list-item-subtitle>{{ item.date }}</v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
-    </v-list>
-    <v-card v-intersect="onIntersect" class="text-center" flat>
-      <v-btn :loading="loading">
-        More
+    <v-card>
+      <v-btn :loading="loading" @click="signIn">
+        signIn
+      </v-btn>
+      <v-btn :loading="loading" @click="signOut">
+        signOut
       </v-btn>
     </v-card>
   </v-container>
 </template>
 <script>
-import delay from 'delay'
 
 export default {
   data () {
     return {
-      items: [],
       loading: false
     }
   },
   methods: {
-    async onIntersect (entries, observer, isIntersecting) {
-      // console.log(entries, observer, isIntersecting)
-      this.loading = true
-      await delay(3000)
-      for (let i = 0; i < 10; i++) {
-        this.items.push({
-          title: Math.random(),
-          subtitle: Math.random(),
-          date: new Date().toLocaleString()
-        })
+    async signIn () {
+      try {
+        this.loading = true
+        const provider = new this.$fireAuthObj.GoogleAuthProvider()
+        const user = await this.$fireAuth.signInWithPopup(provider)
+        console.log(user)
+      } catch (e) {
+        console.error(e.message)
+      } finally {
+        this.loading = false
       }
-      this.loading = false
+    },
+    async signOut () {
+      try {
+        this.loading = true
+        await this.$fireAuth.signOut()
+      } catch (e) {
+        console.error(e.message)
+      } finally {
+        this.loading = false
+      }
     }
   }
 }

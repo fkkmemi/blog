@@ -53,8 +53,8 @@ export default {
       {
         config: firebaseConfig,
         services: {
-          firestore: true
-          // auth: true // Just as example. Can be any other service.
+          firestore: true,
+          auth: true // Just as example. Can be any other service.
         }
       }
     ],
